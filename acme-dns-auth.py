@@ -16,6 +16,12 @@ ALLOW_FROM = []
 # Force re-registration. Overwrites the already existing acme-dns accounts.
 FORCE_REGISTER = False
 
+# Optional, mTLS region
+# NOTE: if ACMDEDNS_URL has to have SSL enabled (https://) for this to have an effect
+USE_MTLS = False # change to True to present client certificate
+MTLS_CERT_PATH = "/etc/letsencrypt/acmedns_mtls_client_cert.pem"
+MTLS_KEY_PATH = "/etc/letsencrypt/acmedns_mtls_client_key.pem"
+
 ###   DO NOT EDIT BELOW THIS POINT   ###
 ###         HERE BE DRAGONS          ###
 
@@ -37,13 +43,18 @@ class AcmeDnsClient(object):
     def register_account(self, allowfrom):
         """Registers a new ACME-DNS account"""
 
+        mtls_args = {}
+        if USE_MTLS:
+            mtls_args['cert'] = (MTLS_CERT_PATH, MTLS_KEY_PATH)
+
         if allowfrom:
             # Include whitelisted networks to the registration call
             reg_data = {"allowfrom": allowfrom}
             res = requests.post(self.acmedns_url+"/register",
-                                data=json.dumps(reg_data))
+                                data=json.dumps(reg_data),
+                                **mtls_args)
         else:
-            res = requests.post(self.acmedns_url+"/register")
+            res = requests.post(self.acmedns_url+"/register", **mtls_args)
         if res.status_code == 201:
             # The request was successful
             return res.json()
@@ -60,9 +71,13 @@ class AcmeDnsClient(object):
         headers = {"X-Api-User": account['username'],
                    "X-Api-Key": account['password'],
                    "Content-Type": "application/json"}
+        mtls_args = {}
+        if USE_MTLS:
+            mtls_args['cert'] = (MTLS_CERT_PATH, MTLS_KEY_PATH)
         res = requests.post(self.acmedns_url+"/update",
                             headers=headers,
-                            data=json.dumps(update))
+                            data=json.dumps(update),
+                            **mtls_args)
         if res.status_code == 200:
             # Successful update
             return
