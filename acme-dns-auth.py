@@ -17,7 +17,7 @@ ALLOW_FROM = []
 FORCE_REGISTER = False
 
 # Optional, mTLS region
-# NOTE: if ACMDEDNS_URL has to have SSL enabled (https://) for this to have an effect
+# NOTE: ACMDEDNS_URL must have SSL enabled (https://) for this to have an effect
 USE_MTLS = False # change to True to present client certificate
 MTLS_CERT_PATH = "/etc/letsencrypt/acmedns_mtls_client_cert.pem"
 MTLS_KEY_PATH = "/etc/letsencrypt/acmedns_mtls_client_key.pem"
