@@ -1,3 +1,17 @@
+# mshafer/acme-dns-certbot-joohoi
+
+This is a fork of [`joohoi/acme-dns-certbot-joohoi`](https://github.com/joohoi/acme-dns-certbot-joohoi)
+
+The intentions of this fork are:
+- enable support for ACME-DNS servers with [mTLS](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/) based security
+- Make accidentally using a "for testing only" server in production by making the server URL default to empty
+- Make setup on a new system easier (default shebang to python3)
+- Keep "only stdlib requirements" mentality
+- Make configuration easier (add support for neighboring conf.json file)
+- Mainline as many of these changes as we can.
+
+# Original docs:
+
 # acme-dns-certbot-joohoi
 
 An example [Certbot](https://certbot.eff.org) client hook for [acme-dns](https://github.com/joohoi/acme-dns). 
