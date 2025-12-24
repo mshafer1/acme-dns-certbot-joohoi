@@ -55,7 +55,7 @@ USE_MTLS = False # change to True to present client certificate
 MTLS_CERT_PATH = "/etc/letsencrypt/acmedns_mtls_client_cert.pem"
 MTLS_KEY_PATH = "/etc/letsencrypt/acmedns_mtls_client_key.pem"
 _SKIP_VERIFY_SERVER_CERT = False  # True to skip server cert verification (not recommended)
-SERVER_CERT_PATH = "server.crt"  # Path to custom server certificate (if not using system CA store)
+SERVER_CERT_PATH = ""  # Path to custom server certificate (if not using system CA store)
 
 ###   DO NOT EDIT BELOW THIS POINT   ###
 ###         HERE BE DRAGONS          ###
@@ -85,6 +85,9 @@ def _load_config():
     USE_MTLS = _env_var_or_default("use_mtls", data, USE_MTLS)
     MTLS_CERT_PATH = _env_var_or_default("mtls_cert_path", data, MTLS_CERT_PATH)
     MTLS_KEY_PATH = _env_var_or_default("mtls_key_path", data, MTLS_KEY_PATH)
+    if (USE_MTLS or MTLS_CERT_PATH or MTLS_KEY_PATH) and (not os.path.exists(MTLS_CERT_PATH) or not os.path.exists(MTLS_KEY_PATH)):
+        print("ERROR: mTLS is enabled but client certificate or key file does not exist.")
+        sys.exit(1)
     SERVER_CERT_PATH = _env_var_or_default("server_cert_path", data, SERVER_CERT_PATH)
 
 DOMAIN = os.environ["CERTBOT_DOMAIN"]
