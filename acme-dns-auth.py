@@ -142,7 +142,6 @@ class AcmeDnsClient(object):
         mtls_args = {}
         if USE_MTLS:
             mtls_args['cert'] = (MTLS_CERT_PATH, MTLS_KEY_PATH)
-        print("server cert path is", SERVER_CERT_PATH)
         res = requests.post(self.acmedns_url+"/update",
                             headers=headers,
                             data=json.dumps(update),
