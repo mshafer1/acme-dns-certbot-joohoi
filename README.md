@@ -4,7 +4,7 @@ This is a fork of [`joohoi/acme-dns-certbot-joohoi`](https://github.com/joohoi/a
 
 The intentions of this fork are:
 - enable support for ACME-DNS servers with [mTLS](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/) based security
-- Make accidentally using a "for testing only" server in production by making the server URL default to empty
+- Make accidentally using a "for testing only" server in production difficult by making the server URL default to empty
 - Make setup on a new system easier (default shebang to python3)
 - Keep "only stdlib requirements" mentality
 - Make configuration easier (add support for neighboring conf.json file)
