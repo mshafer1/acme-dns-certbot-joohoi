@@ -2,6 +2,7 @@
 import json
 import os
 import pathlib
+import typing
 import requests
 import sys
 
@@ -60,10 +61,15 @@ SERVER_CERT_PATH = ""  # Path to custom server certificate (if not using system 
 ###   DO NOT EDIT BELOW THIS POINT   ###
 ###         HERE BE DRAGONS          ###
 
-def _env_var_or_default(varname, conf: dict[str, str], default=""):
+def _env_var_or_default(varname, conf: dict[str, str], default: typing.Any =""):
     """Helper to load environment variable or return default value"""
     conf_value = conf.get(varname, None)
     return os.environ.get("ACME_DNS__" + varname.upper(), conf_value or default)
+
+def _to_bool(value):
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "t"}
+    return bool(value)
 
 def _load_config():
     """Loads configuration from environment variables or neighboring conf.json file"""
@@ -81,11 +87,11 @@ def _load_config():
     ACMEDNS_URL = _env_var_or_default("acmedns_url", data, ACMEDNS_URL)
     STORAGE_PATH = _env_var_or_default("storage_path", data, STORAGE_PATH)
     ALLOW_FROM = _env_var_or_default("allow_from", data, ALLOW_FROM)
-    FORCE_REGISTER = _env_var_or_default("force_register", data, FORCE_REGISTER)
-    USE_MTLS = _env_var_or_default("use_mtls", data, USE_MTLS)
+    FORCE_REGISTER = _to_bool(_env_var_or_default("force_register", data, FORCE_REGISTER))
+    USE_MTLS = _to_bool(_env_var_or_default("use_mtls", data, USE_MTLS))
     MTLS_CERT_PATH = _env_var_or_default("mtls_cert_path", data, MTLS_CERT_PATH)
     MTLS_KEY_PATH = _env_var_or_default("mtls_key_path", data, MTLS_KEY_PATH)
-    if (USE_MTLS or MTLS_CERT_PATH or MTLS_KEY_PATH) and (not os.path.exists(MTLS_CERT_PATH) or not os.path.exists(MTLS_KEY_PATH)):
+    if USE_MTLS and (not MTLS_CERT_PATH or not os.path.exists(MTLS_CERT_PATH) or not MTLS_KEY_PATH or not os.path.exists(MTLS_KEY_PATH)):
         print("ERROR: mTLS is enabled but client certificate or key file does not exist.")
         sys.exit(1)
     SERVER_CERT_PATH = _env_var_or_default("server_cert_path", data, SERVER_CERT_PATH)
