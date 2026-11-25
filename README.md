@@ -26,7 +26,7 @@ Requires Certbot >= 0.10 and Python 3.9 or newer. The hook uses only the Python 
 
 2) Download the authentication hook script and make it executable:
 ```
-$ curl -o /etc/letsencrypt/acme-dns-auth.py https://raw.githubusercontent.com/joohoi/acme-dns-certbot-joohoi/master/acme-dns-auth.py
+$ curl -o /etc/letsencrypt/acme-dns-auth.py https://raw.githubusercontent.com/mshafer1/acme-dns-certbot-joohoi/refs/heads/master/acme-dns-auth.py
 $ chmod 0700 /etc/letsencrypt/acme-dns-auth.py
 ```
 
