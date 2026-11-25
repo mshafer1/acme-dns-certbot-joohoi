@@ -18,21 +18,19 @@ An example [Certbot](https://certbot.eff.org) client hook for [acme-dns](https:/
 
 This authentication hook automatically registers acme-dns accounts and prompts the user to manually add the CNAME records to their main DNS zone on initial run. Subsequent automatic renewals by Certbot cron job / systemd timer run in the background non-interactively.
 
-Requires Certbot >= 0.10, Python requests library.
+Requires Certbot >= 0.10 and Python 3.9 or newer. The hook uses only the Python standard library and has no third-party Python package requirement.
 
 ## Installation
 
 1) Install Certbot using instructions at [https://certbot.eff.org](https://certbot.eff.org)
 
-2) Make sure you have the [python-requests](http://docs.python-requests.org/en/master/) library installed.
-
-3) Download the authentication hook script and make it executable:
+2) Download the authentication hook script and make it executable:
 ```
 $ curl -o /etc/letsencrypt/acme-dns-auth.py https://raw.githubusercontent.com/joohoi/acme-dns-certbot-joohoi/master/acme-dns-auth.py
 $ chmod 0700 /etc/letsencrypt/acme-dns-auth.py
 ```
 
-4) Configure the variables in the beginning of the hook script file to point to your acme-dns instance. The only value that you must change is the `ACMEDNS_URL`, other values are optional.
+3) Configure the variables in the beginning of the hook script file to point to your acme-dns instance. The only value that you must change is the `ACMEDNS_URL`, other values are optional.
 ```
 ### EDIT THESE: Configuration values ###
 

@@ -2,9 +2,11 @@
 import json
 import os
 import pathlib
+import ssl
 import typing
-import requests
 import sys
+import urllib.error
+import urllib.request
 
 __license__ = """
 MIT License
@@ -111,32 +113,70 @@ class AcmeDnsClient(object):
     def __init__(self, acmedns_url):
         self.acmedns_url = acmedns_url
 
+    def _post(self, path, data=None, headers=None):
+        """Posts JSON or form-compatible data using only the Python standard library."""
+        request_headers = dict(headers or {})
+        body = data.encode("utf-8") if isinstance(data, str) else data
+        request = urllib.request.Request(
+            self.acmedns_url + path,
+            data=body,
+            headers=request_headers,
+            method="POST",
+        )
+
+        context = None
+        if self.acmedns_url.lower().startswith("https://"):
+            if SERVER_CERT_PATH:
+                context = ssl.create_default_context(cafile=SERVER_CERT_PATH)
+            elif _SKIP_VERIFY_SERVER_CERT:
+                context = ssl.create_default_context()
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+            else:
+                context = ssl.create_default_context()
+
+            if USE_MTLS:
+                context.load_cert_chain(MTLS_CERT_PATH, MTLS_KEY_PATH)
+
+        try:
+            with urllib.request.urlopen(request, context=context) as res:
+                status = res.status
+                text = res.read().decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as res:
+            status = res.code
+            text = res.read().decode("utf-8", errors="replace")
+        except urllib.error.URLError as error:
+            print("Encountered a network error while communicating with acme-dns: {}".format(error.reason))
+            sys.exit(1)
+
+        return status, text
+
     def register_account(self, allowfrom):
         """Registers a new ACME-DNS account"""
-
-        mtls_args = {}
-        if USE_MTLS:
-            mtls_args['cert'] = (MTLS_CERT_PATH, MTLS_KEY_PATH)
 
         if allowfrom:
             # Include whitelisted networks to the registration call
             reg_data = {"allowfrom": allowfrom}
-            res = requests.post(self.acmedns_url+"/register",
-                                data=json.dumps(reg_data),
-                                verify=SERVER_CERT_PATH or (not _SKIP_VERIFY_SERVER_CERT),
-                                **mtls_args)
+            status, text = self._post(
+                "/register",
+                data=json.dumps(reg_data),
+                headers={"Content-Type": "application/json"},
+            )
         else:
-            res = requests.post(self.acmedns_url+"/register", 
-                                verify=SERVER_CERT_PATH or (not _SKIP_VERIFY_SERVER_CERT),
-                                **mtls_args)
-        if res.status_code == 201:
+            status, text = self._post("/register")
+        if status == 201:
             # The request was successful
-            return res.json()
+            try:
+                return json.loads(text)
+            except ValueError:
+                print("Encountered an error while registering a new acme-dns "
+                      "account. Response was not valid JSON.")
+                sys.exit(1)
         else:
             # Encountered an error
             msg = ("Encountered an error while trying to register a new acme-dns "
                    "account. HTTP status {}, Response body: {}")
-            print(msg.format(res.status_code, res.text))
+            print(msg.format(status, text))
             sys.exit(1)
 
     def update_txt_record(self, account, txt):
@@ -145,15 +185,12 @@ class AcmeDnsClient(object):
         headers = {"X-Api-User": account['username'],
                    "X-Api-Key": account['password'],
                    "Content-Type": "application/json"}
-        mtls_args = {}
-        if USE_MTLS:
-            mtls_args['cert'] = (MTLS_CERT_PATH, MTLS_KEY_PATH)
-        res = requests.post(self.acmedns_url+"/update",
-                            headers=headers,
-                            data=json.dumps(update),
-                            verify=SERVER_CERT_PATH or (not _SKIP_VERIFY_SERVER_CERT),
-                            **mtls_args)
-        if res.status_code == 200:
+        status, text = self._post(
+            "/update",
+            data=json.dumps(update),
+            headers=headers,
+        )
+        if status == 200:
             # Successful update
             return
         else:
@@ -166,10 +203,10 @@ class AcmeDnsClient(object):
             s_headers = json.dumps(headers, indent=2, sort_keys=True)
             s_update = json.dumps(update, indent=2, sort_keys=True)
             try:
-                s_body = json.dumps(res.json(), indent=2, sort_keys=True)
+                s_body = json.dumps(json.loads(text), indent=2, sort_keys=True)
             except ValueError:
-                s_body = res.text
-            print(msg.format(s_headers, s_update, res.status_code, s_body))
+                s_body = text
+            print(msg.format(s_headers, s_update, status, s_body))
             sys.exit(1)
 
 class Storage(object):
